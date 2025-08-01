@@ -1,0 +1,36 @@
+# https://taskfile.dev
+
+version: "3"
+
+tasks:
+  default:
+    cmds:
+      - task: check
+
+  build:
+    desc: Build the application
+    cmds:
+      - go build -o bin/grepcrawlers ./main.go
+    sources:
+      - cmd/root.go
+      - lib/crawler.go
+    generates:
+      - bin/grepcrawlers
+    deps:
+      - check
+
+  check:
+    desc: Check code for issues
+    run: when_changed
+    cmds:
+      - go mod tidy
+      - trunk fmt
+      - trunk check
+
+  update:
+    desc: Update dependencies
+    run: once
+    cmds:
+      - go get -u ./...
+      - go mod tidy
+      - trunk upgrade
