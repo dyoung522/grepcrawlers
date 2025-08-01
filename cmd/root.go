@@ -22,22 +22,22 @@ import (
 	"log"
 	"os"
 
-	"github.com/nerdwerx/dccseeder/lib"
+	"github.com/dyoung522/grepcrawlers/lib"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
 
 var (
-	outputFile string
 	debug      bool
 	force      bool
+	outputFile string
 )
 
 // rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
-	Use:   "dccseeder [flags] <epub-files>",
+	Use:   "grepcrawlers [flags] <epub-files>",
 	Short: "Reads DCC epubs and builds a list of known crawler numbers",
-	Long: `dccseeder is a tool to read Dungeon Crawler Carl epubs and
+	Long: `grepcrawlers is a tool to read Dungeon Crawler Carl epubs and
 and build a list of all the known crawler numbers.`,
 	Run: gatherCrawlers,
 }
@@ -50,17 +50,20 @@ func gatherCrawlers(cmd *cobra.Command, args []string) {
 		ofile      io.WriteCloser
 	)
 
-	// Seed Carl
-	crawlers.Add(lib.Crawler{ID: "4,122", Name: "Carl"})
-
 	if len(args) < 1 {
-		fmt.Println("Usage: dccseeder [--output <filename>] <epub-files>")
+		fmt.Println("Usage: grepcrawlers [--output <filename>] <epub-files>")
 		os.Exit(1)
 	}
 
 	if debug {
 		log.Println("Debug mode enabled.")
 	}
+
+	// Seed Carl
+	if debug {
+		log.Println("Seeding with Carl's known crawler #4,122.")
+	}
+	crawlers.Add(lib.Crawler{ID: "4,122", Name: "Carl"})
 
 	ofileName := cmd.Flag("output").Value.String()
 	if ofileName != "" {
@@ -88,7 +91,7 @@ func gatherCrawlers(cmd *cobra.Command, args []string) {
 			log.Println("Reading EPUB file:", rawfile)
 		}
 
-		for id, crawler := range lib.ScanBook(rawfile, debug) {
+		for id, crawler := range *lib.ScanBook(rawfile, debug) {
 			verb := "will NOT overwrite"
 
 			if existing, ok := crawlers[id]; ok {
@@ -124,6 +127,8 @@ func gatherCrawlers(cmd *cobra.Command, args []string) {
 	} else {
 		log.Fatal("Error sorting crawlers: %w", err)
 	}
+
+	log.Printf("Found %d crawlers", len(crawlers))
 }
 
 // Execute adds all child commands to the root command and sets flags appropriately.
@@ -138,7 +143,7 @@ func Execute() {
 func init() {
 	cobra.OnInitialize(initConfig)
 
-	rootCmd.Flags().BoolVarP(&debug, "debug", "d", false, "Enable debug mode")
+	rootCmd.PersistentFlags().BoolVarP(&debug, "debug", "d", false, "Enable debug mode")
 	rootCmd.Flags().BoolVarP(&force, "force", "f", false, "Force overwrite of duplicates")
 	rootCmd.Flags().StringVarP(&outputFile, "output", "o", "", "Output file for results (default is stdout)")
 }

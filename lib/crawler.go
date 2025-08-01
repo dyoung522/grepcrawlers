@@ -9,6 +9,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/spf13/viper"
 	"github.com/taylorskalyo/goreader/epub"
 )
 
@@ -80,9 +81,16 @@ func (M *Crawlers) SortIDsNumerically() ([]string, error) {
 	return keys, lastErr // Return the sorted slice and any error encountered
 }
 
-func ScanBook(ebook string, debug bool) Crawlers {
+func ScanBook(ebook string, debug bool) *Crawlers {
+	var regexStr = `(?i)#([\d,]+)\.?\s+["“]([^\.]+)\.?["”]`
+
 	crawlers := make(Crawlers)
-	cregex := regexp.MustCompile(`(?i)crawler\s+#?([\d,]+)\.?\s+“([\w\s]+)\.?”`)
+	if regexEnv := viper.GetString("crawler_regex"); regexEnv != "" {
+		regexStr = regexEnv
+	}
+
+	cregex := regexp.MustCompile(regexStr)
+
 	rc, err := epub.OpenReader(ebook)
 	if err != nil {
 		panic(err)
@@ -115,9 +123,12 @@ func ScanBook(ebook string, debug bool) Crawlers {
 				line := scanner.Text()
 				if cregex.MatchString(line) {
 					match := cregex.FindStringSubmatch(line)
-					if len(match) < 3 {
+					if len(match) < 2 {
 						log.Printf("Invalid crawler format in line: %s", line)
 						continue
+					}
+					if len(match) < 3 {
+						match = append(match, "Unknown") // Ensure we have a name even if it's empty
 					}
 					ID, Name := strings.TrimSpace(match[1]), strings.TrimSpace(match[2])
 
@@ -136,5 +147,5 @@ func ScanBook(ebook string, debug bool) Crawlers {
 		}
 	}
 
-	return crawlers
+	return &crawlers
 }

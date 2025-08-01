@@ -16,7 +16,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 */
 package main
 
-import "github.com/nerdwerx/dccseeder/cmd"
+import "github.com/dyoung522/grepcrawlers/cmd"
 
 func main() {
 	cmd.Execute()

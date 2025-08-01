@@ -1,4 +1,4 @@
-module github.com/nerdwerx/dccseeder
+module github.com/dyoung522/grepcrawlers
 
 go 1.24.5
 
